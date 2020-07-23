@@ -1,0 +1,19 @@
+{    
+    "compilerOptions": {
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "outDir": "build",
+        "strict": true,
+        "noImplicitAny": false,
+        "strictPropertyInitialization": false,
+        "module": "commonjs",
+        "target": "es2017",
+        "rootDir": "src",
+        "lib": [
+            "es2017",
+        ]
+    },
+    "include": [
+        "./src/**/*", "knexfile.js"
+    ]
+}

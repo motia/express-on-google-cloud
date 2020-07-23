@@ -1,13 +1,20 @@
-const knex = require('./db');
+import knex from './db';
+import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
+import * as express from 'express';
 
-function authenticateBasic(username, password) {
+const TOKEN_SECRET = process.env.TOKEN_SECRET || (() => {
+    throw new Error('env var TOKEN_SECRET must be set');
+})() || '' 
+
+function authenticateBasic(username: string, password: string) {
     return findUserByusername(username)
         .then((user) => {
             return bcrypt.compare(password, user.password)
         });
 }
 
-const findUserByusername = function(username) {
+const findUserByusername = function (username: string) {
     return knex.queryBuilder()
         .select('id, username')
         .from('users')
@@ -15,7 +22,11 @@ const findUserByusername = function(username) {
         .first();
 };
 
-function authenticateToken(req, res, next) {
+function authenticateToken(
+    req: express.Request,
+    res: express.Response, 
+    next: express.NextFunction
+) {
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
         return res.status(401);
@@ -29,21 +40,21 @@ function authenticateToken(req, res, next) {
         return res.status(401);
     }
 
-    jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, TOKEN_SECRET, (err, user) => {
         if (err) {
             res.status(403)
             return
         }
-        req.user = user
+        req.user = user as any as string;
         next()
     })
 }
 
-function issueToken (userId) {
-  return jwt.sign(userId, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+function issueToken (userId: string) {
+  return jwt.sign(userId, TOKEN_SECRET, { expiresIn: '1800s' });
 }
 
-module.exports = {
+export default {
     authenticateBasic,
     issueToken,
     authenticateToken
