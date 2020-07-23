@@ -1,4 +1,5 @@
 import * as https from 'https';
+import * as http from 'https';
 import { imageSize } from 'image-size';
 
 
@@ -23,7 +24,7 @@ export default function (src: string, MAX_SIZE: number): Promise<ImageSize> {
     reject = rej;
   });
 
-  const req = https.get(src, (response) => {
+  const req = (src.startsWith('http://') ? http : https).get(src, (response) => {
     let chunksTotalSize = 0;
     const chunks: Uint8Array[][] = [];
     response.on('data', (chunk: Uint8Array[]) => {
