@@ -7,16 +7,16 @@ const TOKEN_SECRET = process.env.TOKEN_SECRET || (() => {
     throw new Error('env var TOKEN_SECRET must be set');
 })() || '' 
 
-function authenticateBasic(username: string, password: string) {
+function authenticateBasic(username: string, password: string): Promise<boolean> {
     return findUserByusername(username)
         .then((user) => {
-            return bcrypt.compare(password, user.password)
+            return user ? bcrypt.compare(password, user.password) : false;
         });
 }
 
 const findUserByusername = function (username: string) {
     return knex.queryBuilder()
-        .select('id, username')
+        .select(['id', 'username', 'password'])
         .from('users')
         .where('username', username)
         .first();
@@ -27,31 +27,38 @@ function authenticateToken(
     res: express.Response, 
     next: express.NextFunction
 ) {
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers.authorization;
     if (!authHeader) {
-        return res.status(401);
+        res.status(401);
+        res.end();
+        return;
     }
     const [tokenType, token] = authHeader.split(' ');
     if (!tokenType || tokenType.toLowerCase() !== 'bearer') {
-        return res.status(401);
+        res.status(401);
+        res.end();
+        return;
     }
 
     if (token == null) {
-        return res.status(401);
+        res.status(401);
+        res.end();
+        return;
     }
 
     jwt.verify(token, TOKEN_SECRET, (err, user) => {
         if (err) {
             res.status(403)
+            res.end();
             return
         }
-        req.user = user as any as string;
-        next()
-    })
+        req.user = user as any;
+        next();
+    });
 }
 
 function issueToken (userId: string) {
-  return jwt.sign(userId, TOKEN_SECRET, { expiresIn: '1800s' });
+  return jwt.sign({ userId }, TOKEN_SECRET, { expiresIn: 3600 });
 }
 
 export default {

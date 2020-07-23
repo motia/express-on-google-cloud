@@ -52,7 +52,7 @@ const uploadEndpoint = function (
 
       const record = await knex('uploads')
         .insert({
-          userId: req.user,
+          userId: req.user!.userId,
           name,
           path: files.file.path,
         })
@@ -71,7 +71,7 @@ const downloadEndpoint = async function (req: express.Request, res: express.Resp
     return;
   }
 
-  if (`${file.userId}` !== `${req.user}`) {
+  if (`${file.userId}` !== `${req.user!.userId}`) {
     res.status(403);
     return;
   }
