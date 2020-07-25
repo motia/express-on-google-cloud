@@ -1,10 +1,9 @@
-import * as htmlparser2 from "htmlparser2";
+import * as htmlparser2 from 'htmlparser2';
 import * as url from 'url';
-import * as https from 'https';
-import * as http from 'http';
+import {http, https} from 'follow-redirects';
 import normalizeImgSrc from './normalizeImgSrc';
 import getRemoteImageSize from './getRemoteImageSize';
-import { Handler as Htmlparser2Handler } from 'htmlparser2/lib/Parser'
+import { Handler as Htmlparser2Handler } from 'htmlparser2/lib/Parser';
 
 const MAX_IMAGES_PROCESS = process.env.MAX_IMAGES_PROCESS || 10;
 
@@ -22,7 +21,7 @@ class TitleParser implements Partial<Htmlparser2Handler> {
   constructor(private onTitle: (str: string) => void) {}
 
   onopentag(name: string) {
-    if (!this.found && name === "title") {
+    if (!this.found && name === 'title') {
       this.shouldParseTitle = true;
     } 
   }
@@ -30,7 +29,7 @@ class TitleParser implements Partial<Htmlparser2Handler> {
   ontext(text: string) {
     if (this.shouldParseTitle) {
       this.found = true;
-      this.onTitle(text)
+      this.onTitle(text);
     }
   }
 
@@ -75,7 +74,7 @@ class LargestImgParser implements Partial<Htmlparser2Handler> {
 
     if (Object.keys(this.imgProcessingPromises).length === 1) {
       this.processingFinished = new Promise<void>((resolve) => {
-        this.onFinish = resolve
+        this.onFinish = resolve;
       });
       this.onAsyncTak(this.processingFinished);
     }
@@ -98,7 +97,7 @@ class LargestImgParser implements Partial<Htmlparser2Handler> {
   onend() {
     if (this.onFinish) {
       Promise.all(Object.values(this.imgProcessingPromises))
-        .then(() => { if (this.onFinish) this.onFinish() });
+        .then(() => { if (this.onFinish) this.onFinish(); });
     }
   }
 }
@@ -152,7 +151,7 @@ function createParser (pageUrl: string) {
   const updateUnfurledProp = (prop: keyof UnfurlResult) => (v: string) => {
     // console.log(`---- Unfurled update ${prop} ${unfurled[prop]} to ${v}`);
     unfurled[prop] = v;
-  }
+  };
 
   const partialHandlers: Partial<Htmlparser2Handler>[] = [
     new TitleParser(updateUnfurledProp('title')),
@@ -171,10 +170,11 @@ function createParser (pageUrl: string) {
       mergedPartialHandlers[h] = function () {
         partialHandlers.forEach(u => {
           if (u[h]) {
-            (u[h] as Function).call(u, ...arguments)
+            // eslint-disable-next-line @typescript-eslint/ban-types, prefer-rest-params
+            (u[h] as Function).call(u, ...arguments);
           }
-        })
-      }
+        });
+      };
       return mergedPartialHandlers;    
     }), {});
 
@@ -195,7 +195,7 @@ function createParser (pageUrl: string) {
     
   return { 
     done: allDonePromise.then(() => console.log('***** done!')).then(() => unfurled),
-    write: (x: string) => {parser.write(x)},
+    write: (x: string) => {parser.write(x);},
     end: () => parser.end(),
   };
 }
@@ -207,10 +207,10 @@ export default function unfurl(pageUrl: string) {
     response.on('data', function(chunk) {
       write(chunk);
     }).on('end', () => {
-      end()
+      end();
     });
   });
   
-  return done
+  return done;
 }
     

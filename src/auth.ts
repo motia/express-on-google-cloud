@@ -5,7 +5,7 @@ import * as express from 'express';
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET || (() => {
     throw new Error('env var TOKEN_SECRET must be set');
-})() || '' 
+})() || ''; 
 
 function authenticateBasic(username: string, password: string): Promise<boolean> {
     return findUserByusername(username)
@@ -48,16 +48,18 @@ function authenticateToken(
 
     jwt.verify(token, TOKEN_SECRET, (err, user) => {
         if (err) {
-            res.status(403)
+            res.status(403);
             res.end();
-            return
+            return;
         }
-        req.user = user as any;
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore-inline
+        req.user = user;
         next();
     });
 }
 
-function issueToken (userId: string) {
+function issueToken (userId: string): string {
   return jwt.sign({ userId }, TOKEN_SECRET, { expiresIn: 3600 });
 }
 
@@ -65,4 +67,4 @@ export default {
     authenticateBasic,
     issueToken,
     authenticateToken
-}
+};

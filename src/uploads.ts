@@ -22,9 +22,9 @@ const uploadEndpoint = function (
           '..',
           'uploads',
           randomFileName()
-        )
+        );
       }
-    })
+    });
 
     form.parse(req, async (err, fields, files) => {
       if (err) {
@@ -33,7 +33,7 @@ const uploadEndpoint = function (
       }
 
       if (!files.file) {
-        return res.status(400).json({ errors: {file: 'Missing file'} })
+        return res.status(400).json({ errors: {file: 'Missing file'} });
       }
       if (!files.file.path) {
         return next(new Error('Logic Error: file path is not set'));
@@ -41,7 +41,7 @@ const uploadEndpoint = function (
 
       let name: string;
       if (files.file.name.length > 255) {
-        const ext = path.extname(files.file.name)
+        const ext = path.extname(files.file.name);
         name = files.file.name.substr(
           0,
           files.file.name.length - ext.length - 1
@@ -55,10 +55,10 @@ const uploadEndpoint = function (
           userId: req.user!.userId,
           name,
           path: files.file.path,
-        })
+        });
       res.status(200).json(record);
     });
-}
+};
 
 const downloadEndpoint = async function (req: express.Request, res: express.Response) {
   const file = await knex('uploads')

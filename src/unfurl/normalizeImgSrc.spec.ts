@@ -1,6 +1,6 @@
 import {parse} from 'url';
 import { strictEqual } from 'assert';
-import normalizeImgSrc from './normalizeImgSrc'
+import normalizeImgSrc from './normalizeImgSrc';
 
 
 describe('normalize image url correctly', function () {
@@ -11,7 +11,7 @@ describe('normalize image url correctly', function () {
         parse('https://hello.com/page')
       ),
       'https://hello.com/wow.png'
-    )
+    );
   });
 
 
@@ -22,7 +22,7 @@ describe('normalize image url correctly', function () {
         parse('https://hello.com/page')
       ),
       'https://hello.com/wow.png'
-    )
+    );
   });
 
   it('add scheme and hostname when relative to website root', function () {
@@ -32,7 +32,7 @@ describe('normalize image url correctly', function () {
         parse('https://hello.com/page')
       ),
       'https://hello.com/wow.png'
-    )
+    );
   });
 
   it('removes page url part when relative to current page', function () {
@@ -42,6 +42,6 @@ describe('normalize image url correctly', function () {
         parse('https://hello.com/page/nested')
       ),
       'https://hello.com/page/wow.png'
-    )
+    );
   });
 });

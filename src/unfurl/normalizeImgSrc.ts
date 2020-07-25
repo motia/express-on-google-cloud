@@ -8,7 +8,7 @@ export default function (src: string, pageUrlObj: UrlWithStringQuery) {
   if (sanitizedSrc.includes('://')) {
     return sanitizedSrc;
   } else if (sanitizedSrc.startsWith('//')) {
-    sanitizedSrc = pageUrlObj.protocol + sanitizedSrc
+    sanitizedSrc = pageUrlObj.protocol + sanitizedSrc;
   } else {
     const domain = pageUrlObj.protocol + '//' + pageUrlObj.hostname +
       `${pageUrlObj.port ? ':'+pageUrlObj.port : ''}`;

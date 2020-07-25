@@ -14,33 +14,33 @@ describe('test authenticate', async function () {
                 username: 'username', password: 
                 bcrypt.hashSync('correctpassword', process.env.SALT_ROUNDS || 10)
            });
-    })
+    });
 
 
     it('authenticateBasic success', async function () {
         strictEqual(
             await auth.authenticateBasic('username', 'correctpassword').catch(fail),
             true
-        )
+        );
     });
 
     it('authenticateBasic fails when email is wrong', async function () {
         strictEqual(
             await auth.authenticateBasic('username', 'wrongpassword').catch(fail),
             false
-        )
+        );
     });
 
     it('authenticateBasic fails when password is wrong', async function () {
         strictEqual(
             await auth.authenticateBasic('xxx', 'wrongpassword').catch(fail),
             false
-        )
+        );
     });
 
     this.afterAll(() => {
         db.destroy();
-    })
+    });
 });
 
 

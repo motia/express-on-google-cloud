@@ -1,12 +1,19 @@
 import * as express from 'express';
+import * as morgan from 'morgan';
 import auth from './auth';
 import uploads from './uploads';
-import {parse as parseUrl} from 'url';
+import {parse as parseUrl, format} from 'url';
 import unfurl from './unfurl/unfurl';
 
 const app = express();
+app.use(morgan('dev'));
 
-app.post('/login:/username/:password', async function(req, res, next) {
+app.use(function (err, req, res, next) {
+    console.error(err);
+    res.status(500).json({error: 'Something broke!'});
+});
+
+app.post('/login/:username/:password', async function(req, res, next) {
     const {username, password} = req.params;
     try {
         const authenitcated = await auth.authenticateBasic(
@@ -14,9 +21,9 @@ app.post('/login:/username/:password', async function(req, res, next) {
             password
         );
         if (authenitcated) {
-            res.status(200).json({ token: auth.issueToken(username) })
+            res.status(200).json({ token: auth.issueToken(username) });
         } else {
-            res.status(401).json({ message: 'Invalid credentials' })
+            res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (e) {
         next(e);
@@ -26,12 +33,12 @@ app.post('/login:/username/:password', async function(req, res, next) {
 app.post('/upload', auth.authenticateToken, uploads.uploadEndpoint);
 app.get('/download/:identifier', auth.authenticateToken, uploads.downloadEndpoint);
 
-app.get('/parse/:url', auth.authenticateToken, function (req, res, next) {
-    const url = req.params.url;
+function parseUrlParam(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const url = req.params[0];
     if (!url) {
-        return res.status(400);
+        return res.status(404).json({ error: 'Missing url param' });
     }
-    const parsedUrl = parseUrl(req.params.url);
+    const parsedUrl = parseUrl(url);
     if (!parsedUrl.hostname) {
         return res.status(400).json({ error: 'Url should have a hostname' });
     }
@@ -39,29 +46,22 @@ app.get('/parse/:url', auth.authenticateToken, function (req, res, next) {
         parsedUrl.protocol = 'https:';
     }
 
-
-    unfurl(parsedUrl.toString()).then(unfurled => {
-        res.status(200).json(unfurled)
+    req.params.url = format(parsedUrl);
+    next();
+}
+app.get('/parse/*', auth.authenticateToken, parseUrlParam, function (req, res, next) {
+    unfurl(req.params.url).then(unfurled => {
+        res.status(200).json(unfurled);
     }).catch(e => {
-        next(e)
-    })
+        next(e);
+    });
 });
 
 
-app.get('/translate/:url', auth.authenticateToken, function (req, res, next) {
+app.get('/translate/*', auth.authenticateToken, parseUrlParam, function (req, res) {
     const url = req.params.url;
-    if (!url) {
-        return res.status(400);
-    }
-    const parsedUrl = parseUrl(req.params.url);
-    if (!parsedUrl.hostname) {
-        return res.status(400).json({ error: 'Url should have a hostname' });
-    }
-    if (!parsedUrl.protocol) {
-        parsedUrl.protocol = 'https:';
-    }
-    
     // TODO:
+    res.status(412).json({error: 'not implemented'});
 });
 
 
