@@ -1,9 +1,9 @@
 import { UrlWithStringQuery } from 'url';
 
 
-export default function (src: string, pageUrlObj: UrlWithStringQuery) {
+export default function (src: string, pageUrlObj: UrlWithStringQuery): string | null {
   let sanitizedSrc = (src || '').trim();
-  if (!sanitizedSrc) return;
+  if (!sanitizedSrc) return null;
 
   if (sanitizedSrc.includes('://')) {
     return sanitizedSrc;

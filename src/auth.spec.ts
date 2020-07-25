@@ -25,7 +25,7 @@ describe('test authenticate', async function () {
     });
 
     it('authenticateBasic fails when email is wrong', async function () {
-        strictEqual(
+    strictEqual(
             await auth.authenticateBasic('username', 'wrongpassword').catch(fail),
             false
         );

@@ -1,9 +1,11 @@
-import {IncomingForm} from 'formidable';
-import * as path from 'path';
 import knex from './db';
 import * as hexoid from 'hexoid';
 import * as express from 'express';
+import { Storage } from '@google-cloud/storage';
 
+
+const GS_UPLOADS_BUCKET = process.env.GS_UPLOADS_BUCKET || '';
+const GOOGLE_CLOUD_PORJECT_ID = process.env.GOOGLE_CLOUD_PORJECT_ID || '';
 
 const randomFileName = (hexoid as any as (x: number) => () => string)(25);
 
@@ -11,70 +13,53 @@ const uploadEndpoint = function (
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
-) {
-    const form = new IncomingForm();
+): void {
+  const storage = new Storage({
+    projectId: GOOGLE_CLOUD_PORJECT_ID
+  });
 
-    form.on('fileBegin', function(name, file){
-      // skip upload files other then `file`
-      if (name === 'file') {
-        file.path = path.join(
-          __dirname,
-          '..',
-          'uploads',
-          randomFileName()
-        );
-      }
+  const bucket = storage.bucket(GS_UPLOADS_BUCKET);
+  const blob = bucket.file(`${randomFileName()}`);
+  
+  const stream = blob.createWriteStream({
+		resumable: true,
+		predefinedAcl: 'publicRead',
+	});
+
+	stream.on('error', err => {
+		next(err);
+	});
+
+	stream.on('finish', async () => {
+    const record = await knex('uploads')
+    .insert({
+      userId: req.user!.userId,
+      name,
+      path: blob.name,
     });
+    res.status(200).json(record);
+	});
 
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        next(err);
-        return;
-      }
-
-      if (!files.file) {
-        return res.status(400).json({ errors: {file: 'Missing file'} });
-      }
-      if (!files.file.path) {
-        return next(new Error('Logic Error: file path is not set'));
-      }
-
-      let name: string;
-      if (files.file.name.length > 255) {
-        const ext = path.extname(files.file.name);
-        name = files.file.name.substr(
-          0,
-          files.file.name.length - ext.length - 1
-        ) + '.' + ext;
-      } else {
-        name = files.file.name;
-      }
-
-      const record = await knex('uploads')
-        .insert({
-          userId: req.user!.userId,
-          name,
-          path: files.file.path,
-        });
-      res.status(200).json(record);
-    });
+	stream.end(req.file.buffer);
 };
 
-const downloadEndpoint = async function (req: express.Request, res: express.Response) {
+const downloadEndpoint = async function (req: express.Request, res: express.Response): Promise<void> {
   const file = await knex('uploads')
     .select('*')
     .where('id', req.params.id)
     .first();
 
   if (!file) {
-    res.status(404);
+    res.status(404).json({error: 'Not found'});
     return;
   }
 
   if (`${file.userId}` !== `${req.user!.userId}`) {
-    res.status(403);
+    res.status(403).json({error: 'Not authorized'});
     return;
   }
+
+  throw new Error();
 
   res.download(file.path, file.name);
 };

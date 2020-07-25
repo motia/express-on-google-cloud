@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as morgan from 'morgan';
 import auth from './auth';
 import uploads from './uploads';
+import * as multer from 'multer';
 import {parse as parseUrl, format} from 'url';
 import unfurl from './unfurl/unfurl';
 
@@ -30,7 +31,7 @@ app.post('/login/:username/:password', async function(req, res, next) {
     }
 });
 
-app.post('/upload', auth.authenticateToken, uploads.uploadEndpoint);
+app.post('/upload', auth.authenticateToken, multer().single('file'), uploads.uploadEndpoint);
 app.get('/download/:identifier', auth.authenticateToken, uploads.downloadEndpoint);
 
 function parseUrlParam(req: express.Request, res: express.Response, next: express.NextFunction) {

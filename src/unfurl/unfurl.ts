@@ -40,7 +40,7 @@ class TitleParser implements Partial<Htmlparser2Handler> {
 
 class LargestImgParser implements Partial<Htmlparser2Handler> {
   private imagesCount = 0;
-  private readonly imgProcessingPromises: {[src: string]: Promise<any>} = {};
+  private readonly imgProcessingPromises: {[src: string]: Promise<unknown>} = {};
   private largestImgSize = { width: 0, height: 0 };
   public largestImgSrc: string | null = null;
 
@@ -82,7 +82,7 @@ class LargestImgParser implements Partial<Htmlparser2Handler> {
 
   async asyncProcessImage(sanitizedSrc: string) {
     const size = await getRemoteImageSize(sanitizedSrc, 15 * 1000)
-      .catch(e => ({ width: 0, height: 0 }));
+      .catch(() => ({ width: 0, height: 0 }));
 
     const newArea = size.width * size.height;
     const oldArea = this.largestImgSize.width * this.largestImgSize.height;
@@ -146,7 +146,7 @@ function createParser (pageUrl: string) {
     snippet: null,
   }; 
 
-  const processingPromises: Promise<any>[] = [];
+  const processingPromises: Promise<unknown>[] = [];
 
   const updateUnfurledProp = (prop: keyof UnfurlResult) => (v: string) => {
     // console.log(`---- Unfurled update ${prop} ${unfurled[prop]} to ${v}`);
@@ -200,7 +200,7 @@ function createParser (pageUrl: string) {
   };
 }
   
-export default function unfurl(pageUrl: string) {
+export default function unfurl(pageUrl: string): Promise<UnfurlResult> {
   const { done, write, end } = createParser(pageUrl);
   
   (pageUrl.startsWith('http://') ? http : https).get(pageUrl, function (response) {

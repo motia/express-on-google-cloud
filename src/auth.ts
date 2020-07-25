@@ -3,9 +3,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import * as express from 'express';
 
-const TOKEN_SECRET = process.env.TOKEN_SECRET || (() => {
-    throw new Error('env var TOKEN_SECRET must be set');
-})() || ''; 
+const TOKEN_SECRET = process.env.TOKEN_SECRET || '';
 
 function authenticateBasic(username: string, password: string): Promise<boolean> {
     return findUserByusername(username)
@@ -26,7 +24,7 @@ function authenticateToken(
     req: express.Request,
     res: express.Response, 
     next: express.NextFunction
-) {
+): void {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
         res.status(401);
