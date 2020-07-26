@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as morgan from 'morgan';
 import auth from './auth';
 import uploads from './uploads';
+import {translate} from './translate';
 import * as multer from 'multer';
 import {parse as parseUrl, format} from 'url';
 import unfurl from './unfurl/unfurl';
@@ -50,6 +51,7 @@ function parseUrlParam(req: express.Request, res: express.Response, next: expres
     req.params.url = format(parsedUrl);
     next();
 }
+
 app.get('/parse/*', auth.authenticateToken, parseUrlParam, function (req, res, next) {
     unfurl(req.params.url).then(unfurled => {
         res.status(200).json(unfurled);
@@ -58,12 +60,37 @@ app.get('/parse/*', auth.authenticateToken, parseUrlParam, function (req, res, n
     });
 });
 
+function getLangFromQuery(query: typeof express.request.query)  {
+    if (!query.lang) {
+        return 'ja';
+    }
+    let lang = query.lang;
+    if (Array.isArray(query.lang === 'string')) {
+        lang = query.lang[0];
+    }
+    const allowedLangs = 
+    ['af','sq','am','ar','hy','az','eu','be','bn','bs','bg','ca','ceb','zh-CN','zh','zh-TW','co','hr','cs','da','nl','en','eo','et','fi','fr','fy','gl','ka','de','el','gu','ht','ha','haw','he','iw','hi','hmn','hu','is','ig','id','ga','it','ja','jv','kn','kk','km','rw','ko','ku','ky','lo','la','lv','lt','lb','mk','mg','ms','ml','mt','mi','mr','mn','my','ne','no','ny','or','ps','fa','pl','pt','pa','ro','ru','sm','gd','sr','st','sn','sd','si','sk','sl','so','es','su','sw','sv','tl','tg','ta','tt','te','th','tr','tk','uk','ur','ug','uz','vi','cy','xh','yi','yo','zu'];
 
-app.get('/translate/*', auth.authenticateToken, parseUrlParam, function (req, res) {
+    if (typeof lang === 'string' && allowedLangs.includes(lang)) {
+        return lang;
+    }
+
+    return 'ja';
+};
+
+
+app.get('/translate/*', auth.authenticateToken, parseUrlParam, async function (req, res, next) {
     const url = req.params.url;
-    // TODO:
-    res.status(412).json({error: 'not implemented'});
-});
+    const lang = getLangFromQuery(req.query);
 
+    try {
+        const html = await translate(url, lang);
+        res.status(200)
+            .header('content-type', 'application/html')
+            .end(html);
+    } catch (e) {
+        next(e);
+    }
+});
 
 export default app;

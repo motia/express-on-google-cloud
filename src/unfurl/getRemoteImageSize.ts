@@ -1,6 +1,5 @@
 import {http, https} from 'follow-redirects';
 import { imageSize } from 'image-size';
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from 'constants';
 
 
 const handleChunks = function (src, chunks, {resolve, reject}) {
