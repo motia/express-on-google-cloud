@@ -15,8 +15,9 @@ dotEnv.config({ path: join(__dirname, '..', '/', '.env') }),
     process.exit(1);
 }});
 
-
-process.env.GOOGLE_APPLICATION_CREDENTIALS = join(__dirname, '../google.json');
+if (process.env.IS_LOCAL) {
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = join(__dirname, '../google.json');
+}
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server is listening at ${PORT}`));

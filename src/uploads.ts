@@ -37,10 +37,11 @@ const uploadEndpoint = async function (
 };
 
 const downloadEndpoint = async function (req: express.Request, res: express.Response, next): Promise<void> {
-  const file = await knex('uploads')
+  const file = await knex<UploadRecord>('uploads')
     .select('*')
     .where('id', req.params.identifier)
-    .first();
+    .first()
+    .catch((e) => { next(e); });
 
   if (!file) {
     res.status(404).json({error: 'Not found'});
@@ -52,13 +53,19 @@ const downloadEndpoint = async function (req: express.Request, res: express.Resp
     return;
   }
 
-  const buffer = await downloadFileFromGs('uploads', file.path);
+  const buffer = await downloadFileFromGs('uploads', file.path)
+    .catch(e => {next(e);});
+  if (!buffer || buffer.length) {
+    res.status(404).json({error: 'File is empty'});
+    return;
+  }
 
   res.status(200);
   res.header('content-type', 'application/octet-stream');
   res.header('content-disposition', `inline; filename="${file.name}"`);
-
   res.end(buffer);
 };
+
+interface UploadRecord {id: string, userId: string, path: string, name: string}
 
 export default { uploadEndpoint, downloadEndpoint };

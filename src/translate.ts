@@ -3,7 +3,7 @@ import {TranslationServiceClient} from '@google-cloud/translate';
 import { uploadFileToGS, randomFileName, downloadFileFromGs, getBucketName } from './gsHelpers';
 
 export const translate = async function (url: string, lang = 'ja'): Promise<Buffer> {
-    const {data: html} = await axios.get(url);
+    const {data: html} = await axios.get(url);      
 
     const inputFileCode = randomFileName();
     const inputFile = inputFileCode+'.html';

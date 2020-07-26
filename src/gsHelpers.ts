@@ -6,10 +6,10 @@ export const randomFileName = (hexoid as any as (x: number) => () => string)(25)
 
 export const downloadFileFromGs = async (bucketCode: string, name: string): Promise<Buffer> => {
   const bucket = getGSBucket(bucketCode);
-  const [buffer] = await bucket.file(name).download();
-  return buffer;
+  const res = await bucket.file(name).download();
+  return res[0];
+};
 
-}
 export const uploadFileToGS = function(bucketCode: string, fileName: string, buffer: Buffer): Promise<void> {
     const completer = new Completer<void>();
     const blob = getGSBucket(bucketCode).file(fileName);
@@ -55,10 +55,8 @@ const getGSBucket = function(bucketCode: string): Bucket {
   }
 
   if (!_storage) {
-    const googleCreds = (process.env.IS_LOCAL || '') ? require('../google.json')  : undefined;
     _storage = new Storage({
       projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
-      credentials: googleCreds
     });
   }
   
