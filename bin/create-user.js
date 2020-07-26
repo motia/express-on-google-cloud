@@ -1,7 +1,17 @@
-const knex = require('knex')
-const bcrypt = require('bcrypt')
-const knexConfig = require('../knexfile')
+'use strict';
 
+const {join} = require('path');
+const bcrypt = require('bcrypt');
+require('dotenv').config({path: join(__dirname, '..', '.env')});
+
+if (process.env.IS_LOCAL) {
+   process.env.GOOGLE_APPLICATION_CREDENTIALS = join(__dirname, '../google.json');
+}
+
+const {Firestore} = require('@google-cloud/firestore');
+
+// Create a new client
+const firestore = new Firestore();
 
 function makeid(length) {
    let result           = '';
@@ -13,19 +23,18 @@ function makeid(length) {
    return result;
 }
 
-const username = process.argv[2];
+const username = (process.argv[2] || '').trim();
 
 if (!username) {
     throw new Error('Require username parameter');
 }
 const password = makeid(12);
+
 const passwordHash = bcrypt.hashSync(password, process.env.SALT_ROUNDS || 10);
 
-const connection = knex(knexConfig[process.env.NODE_ENV || 'development']);
-connection('users')
-  .insert({ username, password: passwordHash })
-  .then(() => {
-    console.log(`User ${username} created with random password`);
-    console.log(password);
-    connection.destroy();
+firestore.collection('users').add({username, password: passwordHash}).then(async () => {
+   console.log(`User# ${username} created with random password`);
+   console.log(password);
+}).catch(e => {
+   console.error(e);
 });

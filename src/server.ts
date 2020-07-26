@@ -6,6 +6,7 @@ import {translate} from './translate';
 import * as multer from 'multer';
 import {parse as parseUrl, format} from 'url';
 import unfurl from './unfurl/unfurl';
+import { findUserByUsername } from './db';
 
 const app = express();
 app.use(morgan('dev'));
@@ -20,7 +21,8 @@ app.post('/login/:username/:password', async function(req, res, next) {
     try {
         const authenitcated = await auth.authenticateBasic(
             username,
-            password
+            password,
+            findUserByUsername
         );
         if (authenitcated) {
             res.status(200).json({ token: auth.issueToken(username) });

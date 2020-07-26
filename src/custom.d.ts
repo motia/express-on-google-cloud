@@ -6,7 +6,7 @@ declare global {
             user?: {
                 exp: number
                 iat: number
-                userId: string
+                username: string
             };
         }
     }

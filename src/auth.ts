@@ -1,20 +1,16 @@
-import knex from './db';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import * as express from 'express';
+import { findUserByUsername } from './db';
 
-async function authenticateBasic(username: string, password: string): Promise<boolean> {
-    const user = await findUserByusername(username);
-    return user ? bcrypt.compare(password, user.password) : false;
+async function authenticateBasic(
+    username: string,
+    password: string,
+    findUserByusernameCb: typeof findUserByUsername
+): Promise<boolean> {
+    const user = await findUserByusernameCb(username);
+    return user ? await bcrypt.compare(password, user.password) : false;
 }
-
-const findUserByusername = function (username: string) {
-    return knex.queryBuilder()
-        .select(['id', 'username', 'password'])
-        .from('users')
-        .where('username', username)
-        .first();
-};
 
 function authenticateToken(
     req: express.Request,
@@ -52,8 +48,8 @@ function authenticateToken(
     });
 }
 
-function issueToken (userId: string): string {
-  return jwt.sign({ userId }, process.env.TOKEN_SECRET || '', { expiresIn: 3600 });
+function issueToken (username: string): string {
+  return jwt.sign({ username }, process.env.TOKEN_SECRET || '', { expiresIn: 3600 });
 }
 
 export default {

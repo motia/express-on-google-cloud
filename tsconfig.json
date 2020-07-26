@@ -12,8 +12,5 @@
         "lib": [
             "es2017",
         ]
-    },
-    "include": [
-        "./src/**/*", "knexfile.js"
-    ]
+    }
 }

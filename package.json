@@ -11,6 +11,7 @@
     "lint:fix": "eslint --ext ts --fix src"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^4.1.1",
     "@google-cloud/storage": "^5.1.2",
     "@google-cloud/translate": "^6.0.2",
     "@types/bcrypt": "^3.0.0",

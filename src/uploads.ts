@@ -1,6 +1,6 @@
-import knex from './db';
 import * as express from 'express';
 import { uploadFileToGS, randomFileName, downloadFileFromGs } from './gsHelpers';
+import { findUploadRecord, createUploadRecord } from './db';
 
 
 const uploadEndpoint = async function (
@@ -17,39 +17,33 @@ const uploadEndpoint = async function (
     next(e);
   }
   
-  const record = {
-    userId: req.user!.userId,
-    name: req.file.originalname,
-    path: fileName,
-  };
+  const username = req.user!.username;
 
   try {
-    const [id] = await knex('uploads')
-      .insert(record);
-    res.status(200).json({
-      id,
-      userId: req.user!.userId,
-      name: req.file.originalname,
+    const doc = await createUploadRecord(username, {
+      name: req.file.originalname || randomFileName(),
+      path: fileName,
     });
+
+    res.status(200)
+      .json(doc);
   } catch (e) {
     next(e);
   }
 };
 
-const downloadEndpoint = async function (req: express.Request, res: express.Response, next): Promise<void> {
-  const file = await knex<UploadRecord>('uploads')
-    .select('*')
-    .where('id', req.params.identifier)
-    .first()
-    .catch((e) => { next(e); });
+const downloadEndpoint = async function (req: express.Request, res: express.Response,
+  next: express.NextFunction): Promise<void> {
+  const identifier = req.params.identifier;
+  const username = req.user!.username;
 
+  const file = await findUploadRecord({username, identifier});
+  if (!file) {
+    res.status(404)
+      .json({erorr: 'File not found'});
+  }
   if (!file) {
     res.status(404).json({error: 'Not found'});
-    return;
-  }
-
-  if (`${file.userId}` !== `${req.user!.userId}`) {
-    res.status(403).json({error: 'Not authorized'});
     return;
   }
 
@@ -66,6 +60,5 @@ const downloadEndpoint = async function (req: express.Request, res: express.Resp
   res.end(buffer);
 };
 
-interface UploadRecord {id: string, userId: string, path: string, name: string}
 
 export default { uploadEndpoint, downloadEndpoint };
