@@ -3,13 +3,9 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 import * as express from 'express';
 
-const TOKEN_SECRET = process.env.TOKEN_SECRET || '';
-
-function authenticateBasic(username: string, password: string): Promise<boolean> {
-    return findUserByusername(username)
-        .then((user) => {
-            return user ? bcrypt.compare(password, user.password) : false;
-        });
+async function authenticateBasic(username: string, password: string): Promise<boolean> {
+    const user = await findUserByusername(username);
+    return user ? bcrypt.compare(password, user.password) : false;
 }
 
 const findUserByusername = function (username: string) {
@@ -44,10 +40,9 @@ function authenticateToken(
         return;
     }
 
-    jwt.verify(token, TOKEN_SECRET, (err, user) => {
+    jwt.verify(token, process.env.TOKEN_SECRET || '', (err, user) => {
         if (err) {
-            res.status(403);
-            res.end();
+            res.status(403).json({ error: 'Invalid auth token' });
             return;
         }
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -58,7 +53,7 @@ function authenticateToken(
 }
 
 function issueToken (userId: string): string {
-  return jwt.sign({ userId }, TOKEN_SECRET, { expiresIn: 3600 });
+  return jwt.sign({ userId }, process.env.TOKEN_SECRET || '', { expiresIn: 3600 });
 }
 
 export default {

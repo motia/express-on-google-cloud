@@ -2,7 +2,7 @@ import * as dotEnv from 'dotenv';
 import app from './server';
 import { join } from 'path';
 
-dotEnv.config({ path: join(__dirname, '..', '/', '.env') });
+dotEnv.config({ path: join(__dirname, '..', '/', '.env') }),
 
 [
     'TOKEN_SECRET',
