@@ -1,71 +1,42 @@
 import knex from './db';
-import * as hexoid from 'hexoid';
 import * as express from 'express';
-import { Storage, Bucket } from '@google-cloud/storage';
-
-const randomFileName = (hexoid as any as (x: number) => () => string)(25);
+import { uploadFileToGS, randomFileName, downloadFileFromGs } from './gsHelpers';
 
 
-let _bucket: Bucket | null = null;
-const getUploadsBucket = function() {
-  if (_bucket) {
-    return _bucket;
-  }
-  const googleCreds = (process.env.IS_LOCAL || '') ? require('../google.json')  : undefined;
-  const storage = new Storage({
-    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
-    credentials: googleCreds
-  });
-
-  _bucket = storage.bucket(process.env.GS_UPLOADS_BUCKET || '');
-  return _bucket;
-};
-
-const uploadEndpoint = function (
+const uploadEndpoint = async function (
   req: express.Request,
   res: express.Response,
   next: express.NextFunction
-): void {
-  const bucket = getUploadsBucket();
-  const blob = bucket.file(`${randomFileName()}`);
+): Promise<void> {
+  const buffer = req.file.buffer;
+  const fileName = `${randomFileName()}`;
+
+  try {
+    await uploadFileToGS('uploads', fileName, buffer);
+  } catch (e) {
+    next(e);
+  }
   
+  const record = {
+    userId: req.user!.userId,
+    name: req.file.originalname,
+    path: fileName,
+  };
 
-  let uploadError: Error;
-
-  const stream = blob.createWriteStream({
-		resumable: true,
-		predefinedAcl: 'publicRead',
-	});
-
-	stream.on('error', err => {
-    uploadError = err;
-    next(err);
-  });
-  
-  stream.on('finish', () => {
-    if (uploadError) {
-      return;
-    }
-
-    const record = {
+  try {
+    const [id] = await knex('uploads')
+      .insert(record);
+    res.status(200).json({
+      id,
       userId: req.user!.userId,
       name: req.file.originalname,
-      path: blob.name,
-    };
-    knex('uploads')
-      .insert(record).then(id => {
-        res.status(200).json({
-          id,
-          userId: req.user!.userId,
-          name: req.file.originalname,
-        });
-      }).catch(next);
-  });
-
-	stream.end(req.file.buffer);
+    });
+  } catch (e) {
+    next(e);
+  }
 };
 
-const downloadEndpoint = async function (req: express.Request, res: express.Response): Promise<void> {
+const downloadEndpoint = async function (req: express.Request, res: express.Response, next): Promise<void> {
   const file = await knex('uploads')
     .select('*')
     .where('id', req.params.identifier)
@@ -81,8 +52,7 @@ const downloadEndpoint = async function (req: express.Request, res: express.Resp
     return;
   }
 
-  const bucket = getUploadsBucket();
-  const [buffer] = await bucket.file(file.path).download();
+  const buffer = await downloadFileFromGs('uploads', file.path);
 
   res.status(200);
   res.header('content-type', 'application/octet-stream');
