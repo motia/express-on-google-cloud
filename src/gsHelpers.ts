@@ -56,7 +56,7 @@ const getGSBucket = function(bucketCode: string): Bucket {
 
   if (!_storage) {
     _storage = new Storage({
-      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID || '',
+      projectId: process.env.PROJECT_ID || '',
     });
   }
   

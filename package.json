@@ -2,9 +2,9 @@
   "scripts": {
     "build": "tsc",
     "build:w": "tsc -w",
-    "serve": "node ./build/main.js",
+    "start": "node ./build/main.js",
     "dev": "npm run develop",
-    "develop": "npm run build && npm run serve",
+    "develop": "npm run build && npm run start",
     "test": "npm run build && mocha --file \"./build/test.js\" \"./build/**/*.spec.js\"",
     "test:w": "npm run build && mocha --file \"./build/test.js\" -w \"./build/**/*.spec.js\"",
     "lint": "eslint --ext ts src",

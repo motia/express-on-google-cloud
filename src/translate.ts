@@ -10,7 +10,7 @@ export const translate = async function (url: string, lang = 'ja'): Promise<Buff
     await uploadFileToGS('i18n_input', inputFile, html);
 
     await batchTranslateText(
-      process.env.GOOGLE_CLOUD_PROJECT_ID!,
+      process.env.PROJECT_ID!,
       `gs://${getBucketName('i18n_input')}/${inputFile}`,
       `gs://${getBucketName('i18n_output')}/${inputFileCode}`,
       lang

@@ -36,7 +36,7 @@ function authenticateToken(
         return;
     }
 
-    jwt.verify(token, process.env.TOKEN_SECRET || '', (err, user) => {
+    jwt.verify(token, process.env.JWT_TOKEN_SECRET || '', (err, user) => {
         if (err) {
             res.status(403).json({ error: 'Invalid auth token' });
             return;
@@ -49,7 +49,7 @@ function authenticateToken(
 }
 
 function issueToken (username: string): string {
-  return jwt.sign({ username }, process.env.TOKEN_SECRET || '', { expiresIn: 3600 });
+  return jwt.sign({ username }, process.env.JWT_TOKEN_SECRET || '', { expiresIn: 3600 });
 }
 
 export default {
