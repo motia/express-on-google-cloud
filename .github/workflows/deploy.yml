@@ -1,0 +1,78 @@
+# Copyright 2020 Google, LLC.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# https://github.com/GoogleCloudPlatform/github-actions/blob/master/example-workflows/gce/.github/workflows/gce.yaml
+
+name: Build and Deploy to Google Compute Engine
+
+on:
+  push:
+    branches:
+    - master
+
+env:
+  PROJECT_ID: ${{ secrets.GCE_PROJECT }}
+  GCE_INSTANCE: ${{ secrets.GCE_INSTANCE }}
+  GCE_INSTANCE_ZONE: ${{ secrets.GCE_INSTANCE_ZONE }}
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Setup gcloud CLI
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '290.0.1'
+        service_account_key: ${{ secrets.GCE_SA_KEY }}
+        project_id: ${{ secrets.GCE_PROJECT }}
+
+    # Configure Docker to use the gcloud command-line tool as a credential
+    # helper for authentication
+    - run: |-
+        gcloud --quiet auth configure-docker
+    # Build the Docker image
+    - name: Build
+      run: |-
+        docker build --tag "gcr.io/$PROJECT_ID/$GCE_INSTANCE-image:$GITHUB_SHA" .
+    # Push the Docker image to Google Container Registry
+    - name: Publish
+      run: |-
+        docker push "gcr.io/$PROJECT_ID/$GCE_INSTANCE-image:$GITHUB_SHA"
+    - name: Deploy
+      env:
+        GS_I18N_INPUT_BUCKET: ${{ secrets.GS_I18N_INPUT_BUCKET }}
+        GS_I18N_OUTPUT_BUCKET: ${{ secrets.GS_I18N_OUTPUT_BUCKET }}
+        GS_UPLOADS_BUCKET: ${{ secrets.GS_UPLOADS_BUCKET }}
+        JWT_TOKEN_SECRET: ${{ secrets.JWT_TOKEN_SECRET }}
+      run: |-
+        set -e
+        echo -n > container_env
+        echo PROJECT_ID=$PROJECT_ID >> container_env
+        echo GS_I18N_INPUT_BUCKET=$GS_I18N_INPUT_BUCKET > container_env
+        echo GS_I18N_OUTPUT_BUCKET=$GS_I18N_OUTPUT_BUCKET >> container_env
+        echo GS_UPLOADS_BUCKET=$GS_UPLOADS_BUCKET >> container_env
+        echo JWT_TOKEN_SECRET=$JWT_TOKEN_SECRET >> container_env
+        
+        gcloud compute instances update-container "$GCE_INSTANCE" \
+          --zone "$GCE_INSTANCE_ZONE" \
+          --container-image "gcr.io/$PROJECT_ID/$GCE_INSTANCE-image:$GITHUB_SHA" \
+          --container-env-file=JWT_TOKEN_SECRET
+
+        rm container_env
+

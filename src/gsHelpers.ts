@@ -2,7 +2,7 @@ import { Storage, Bucket } from '@google-cloud/storage';
 import Completer from 'promise-completer';
 import * as hexoid from 'hexoid';
 
-export const randomFileName = (hexoid as any as (x: number) => () => string)(25);
+export const randomFileName = (hexoid as any as (x: number) => () => string)(36);
 
 export const downloadFileFromGs = async (bucketCode: string, name: string): Promise<Buffer> => {
   const bucket = getGSBucket(bucketCode);
