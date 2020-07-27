@@ -9,12 +9,20 @@ import unfurl from './unfurl/unfurl';
 import { findUserByUsername } from './db';
 
 const app = express();
-app.use(morgan('dev'));
+morgan.token('url', (req) => {
+    const url = (req as any as {originalUrl: string | undefined}).originalUrl || req.url || '';
+    if (url.match(/^(\/?)login/)) {
+        const parts = url.split('/');
+        const offset = 2 + (parts[0] === '/' ? 0 : 1);
+        parts[offset] = '*******';
 
-app.use(function (err, req, res, next) {
-    console.error(err);
-    res.status(500).json({error: 'Something broke!'});
+        return parts.join('/');
+    }
+
+    return url;
 });
+
+app.use(morgan('dev'));
 
 app.post('/login/:username/:password', async function(req, res, next) {
     const {username, password} = req.params;
@@ -78,7 +86,7 @@ function getLangFromQuery(query: typeof express.request.query)  {
     }
 
     return 'ja';
-};
+}
 
 
 app.get('/translate/*', auth.authenticateToken, parseUrlParam, async function (req, res, next) {
@@ -94,5 +102,14 @@ app.get('/translate/*', auth.authenticateToken, parseUrlParam, async function (r
         next(e);
     }
 });
+
+// error middleware must be last
+app.use(function (err, req, res, next) {
+    if (res.headersSent) {
+        return next(err);
+    }
+    console.error(err);
+    res.status(500).json({error: 'Something broke!'});
+} as express.ErrorRequestHandler);
 
 export default app;
