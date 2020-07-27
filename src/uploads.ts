@@ -47,9 +47,19 @@ const downloadEndpoint = async function (req: express.Request, res: express.Resp
     return;
   }
 
-  const buffer = await downloadFileFromGs('uploads', file.path)
-    .catch(e => {next(e);});
-  if (!buffer || buffer.length) {
+  let buffer: Buffer | null = null;
+  try {
+    buffer = await downloadFileFromGs('uploads', file.path);
+  } catch (e) {
+    next(e);
+    return;
+  }
+  
+  if (!buffer) {
+    return;
+  }
+
+  if (!buffer.length) {
     res.status(404).json({error: 'File is empty'});
     return;
   }
