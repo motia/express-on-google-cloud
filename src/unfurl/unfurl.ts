@@ -194,7 +194,7 @@ function createParser (pageUrl: string) {
   );
     
   return { 
-    done: allDonePromise.then(() => console.log('***** done!')).then(() => unfurled),
+    done: allDonePromise.then(() => unfurled),
     write: (x: string) => {parser.write(x);},
     end: () => parser.end(),
   };

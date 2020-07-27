@@ -47,14 +47,8 @@ async function batchTranslateText(projectId: string, inputUri: string, outputUri
     };
 
     try {
-      // Batch translate text using a long-running operation
       const [operation] = await translationClient.batchTranslateText(request);
-
-      // Wait for operation to complete.
       const [response] = await operation.promise(); 
-
-      console.log(`Total Characters: ${response.totalCharacters}`);
-      console.log(`Translated Characters: ${response.translatedCharacters}`);
       return response;
     } catch (error) {
         console.error(error);
