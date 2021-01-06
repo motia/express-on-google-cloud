@@ -14,7 +14,7 @@
     "@google-cloud/firestore": "^4.1.1",
     "@google-cloud/storage": "^5.1.2",
     "@google-cloud/translate": "^6.0.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
